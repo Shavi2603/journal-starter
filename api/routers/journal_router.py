@@ -87,7 +87,7 @@ async def update_entry(
     empty strings and 300-character bodies — see ``TestUpdateEntry`` in
     tests/test_api.py.
     """
-    result = await entry_service.update_entry(entry_id, entry_update.model_dump())
+    result = await entry_service.update_entry(entry_id, entry_update.model_dump(exclude_unset=True))
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
 
