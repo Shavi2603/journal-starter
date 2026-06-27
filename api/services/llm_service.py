@@ -1,3 +1,4 @@
+import json
 """Task 4: Implement analyze_journal_entry using any OpenAI-compatible API.
 
 This project mandates the OpenAI Python SDK, which works with:
@@ -35,6 +36,41 @@ async def analyze_journal_entry(
     entry_text: str,
     client: AsyncOpenAI | None = None,
 ) -> dict:
+    
+    if client is None:
+        client = _default_client()
+
+    response = await client.chat.completions.create(
+        model=get_settings().openai_model,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a journal analyst. Analyze the journal entry and respond "
+                    "with a JSON object containing exactly these keys: "
+                    "sentiment (one of: positive,negative,neutral), "
+                    "summary (a brief summary string), "
+                    "topics (a list of strings)."
+                ),
+            },
+            {
+                "role": "user",
+                "content": entry_text
+            },
+        ],
+    )
+
+    raw = response.choices[0].message.content
+    if raw is None:
+        raise ValueError("LLm returned no entry")
+    parsed = json.loads(raw)
+
+    return {
+        "entry_id":entry_id,
+        "sentiment":parsed["sentiment"],
+        "summary": parsed["summary"],
+        "topics": parsed["topics"],
+    }
     """Analyze a journal entry using an OpenAI-compatible LLM.
 
     Args:
