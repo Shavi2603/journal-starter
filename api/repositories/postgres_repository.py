@@ -89,14 +89,22 @@ class PostgresDB(DatabaseInterface):
                 }
             return None
 
-    async def update_entry(
-        self, entry_id: str, updated_data: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        updated_at = datetime.now(tz=UTC)
-        updated_data["id"] = entry_id
-        data_json = json.dumps(updated_data, default=PostgresDB.datetime_serialize)
+    async def update_entry(self, entry_id: str, updated_data: dict[str, Any]) -> dict[str, Any] | None:
+        updated_at = datetime.utcnow()
 
         async with self.pool.acquire() as conn:
+            # Fetch existing entry first
+            existing = await conn.fetchrow("SELECT * FROM entries WHERE id = $1", entry_id)
+            if not existing:
+                return None
+
+            # Merge: start from existing data, apply only the provided fields
+            current_data = json.loads(existing["data"])
+            current_data.update(updated_data)
+            current_data["id"] = entry_id
+
+            data_json = json.dumps(current_data, default=PostgresDB.datetime_serialize)
+
             query = """
             UPDATE entries
             SET data = $2, updated_at = $3
