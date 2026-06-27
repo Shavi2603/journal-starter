@@ -89,18 +89,31 @@ class PostgresDB(DatabaseInterface):
                 }
             return None
 
-    async def update_entry(self, entry_id: str, updated_data: dict[str, Any]) -> None:
+    async def update_entry(self, entry_id: str, updated_data: dict[str, Any]) -> dict[str, Any] | None:
+        updated_at = datetime.utcnow()
         updated_data["id"] = entry_id
-
         data_json = json.dumps(updated_data, default=PostgresDB.datetime_serialize)
-
+        
         async with self.pool.acquire() as conn:
             query = """
             UPDATE entries
             SET data = $2, updated_at = $3
             WHERE id = $1
+            RETURNING *
             """
-            await conn.execute(query, entry_id, data_json, updated_data["updated_at"])
+            row = await conn.fetchrow(query, entry_id, data_json, updated_at)
+            
+            if row:
+                data = json.loads(row["data"])
+                return {
+                    "id": row["id"],
+                    "work": data.get("work"),
+                    "struggle": data.get("struggle"),
+                    "intention": data.get("intention"),
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            return None
 
     async def delete_entry(self, entry_id: str) -> None:
         async with self.pool.acquire() as conn:
