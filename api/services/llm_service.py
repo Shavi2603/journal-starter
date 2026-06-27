@@ -1,4 +1,5 @@
 import json
+
 """Task 4: Implement analyze_journal_entry using any OpenAI-compatible API.
 
 This project mandates the OpenAI Python SDK, which works with:
@@ -36,7 +37,7 @@ async def analyze_journal_entry(
     entry_text: str,
     client: AsyncOpenAI | None = None,
 ) -> dict:
-    
+
     if client is None:
         client = _default_client()
 
@@ -53,10 +54,7 @@ async def analyze_journal_entry(
                     "topics (a list of strings)."
                 ),
             },
-            {
-                "role": "user",
-                "content": entry_text
-            },
+            {"role": "user", "content": entry_text},
         ],
     )
 
@@ -66,8 +64,8 @@ async def analyze_journal_entry(
     parsed = json.loads(raw)
 
     return {
-        "entry_id":entry_id,
-        "sentiment":parsed["sentiment"],
+        "entry_id": entry_id,
+        "sentiment": parsed["sentiment"],
         "summary": parsed["summary"],
         "topics": parsed["topics"],
     }
