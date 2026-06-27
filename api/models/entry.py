@@ -1,7 +1,12 @@
 from datetime import UTC, datetime
+from typing import Annotated
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
+
+ConstrainedStr = Annotated[
+    str, StringConstraints(min_length=1, max_length=256, strip_whitespace=True)
+]
 
 
 class AnalysisResponse(BaseModel):
@@ -29,21 +34,27 @@ class EntryCreate(BaseModel):
     See https://docs.pydantic.dev/latest/concepts/types/#constrained-types
     """
 
-    work: str = Field(
+    work: ConstrainedStr = Field(
         max_length=256,
         description="What did you work on today?",
         json_schema_extra={"example": "Studied FastAPI and built my first API endpoints"},
     )
-    struggle: str = Field(
+    struggle: ConstrainedStr = Field(
         max_length=256,
         description="What's one thing you struggled with today?",
         json_schema_extra={"example": "Understanding async/await syntax and when to use it"},
     )
-    intention: str = Field(
+    intention: ConstrainedStr = Field(
         max_length=256,
         description="What will you study/work on tomorrow?",
         json_schema_extra={"example": "Practice PostgreSQL queries and database design"},
     )
+
+
+class EntryUpdate(BaseModel):
+    work: ConstrainedStr | None = Field(default=None)
+    struggle: ConstrainedStr | None = Field(default=None)
+    intention: ConstrainedStr | None = Field(default=None)
 
 
 # TODO (Task 3): Define an ``EntryUpdate`` model for PATCH /entries/{entry_id}.
