@@ -89,8 +89,10 @@ class PostgresDB(DatabaseInterface):
                 }
             return None
 
-    async def update_entry(self, entry_id: str, updated_data: dict[str, Any]) -> dict[str, Any] | None:
-        updated_at = datetime.utcnow()
+    async def update_entry(
+        self, entry_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        updated_at = datetime.now(tz=UTC)
 
         async with self.pool.acquire() as conn:
             # Fetch existing entry first
