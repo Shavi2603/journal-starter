@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import asyncpg
@@ -89,11 +89,13 @@ class PostgresDB(DatabaseInterface):
                 }
             return None
 
-    async def update_entry(self, entry_id: str, updated_data: dict[str, Any]) -> dict[str, Any] | None:
-        updated_at = datetime.utcnow()
+    async def update_entry(
+        self, entry_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        updated_at = datetime.now(tz=UTC)
         updated_data["id"] = entry_id
         data_json = json.dumps(updated_data, default=PostgresDB.datetime_serialize)
-        
+
         async with self.pool.acquire() as conn:
             query = """
             UPDATE entries
@@ -102,7 +104,7 @@ class PostgresDB(DatabaseInterface):
             RETURNING *
             """
             row = await conn.fetchrow(query, entry_id, data_json, updated_at)
-            
+
             if row:
                 data = json.loads(row["data"])
                 return {
